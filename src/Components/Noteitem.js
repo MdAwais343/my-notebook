@@ -1,31 +1,174 @@
-import React from "react";
-import { useContext } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import noteContext from "../Context/noteContext";
-const NoteItem = (props) => {
-  const { note, deleteNote, updateNote } = props;
-  const context = useContext(noteContext);
+import Noteitem from "./Noteitem";
+import AddNote from "./AddNote";
+import { useNavigate } from "react-router-dom";
+
+const Notes = (props) => {
+  let navigate = useNavigate();
+  const { notes, getNotes, editNote, deleteNote } = useContext(noteContext);
+  const [currentNote, setCurrentNote] = useState({
+    id: "",
+    title: "",
+    description: "",
+    tag: "",
+  });
+
+  const handleSaveClick = () => {
+    editNote(
+      currentNote.id,
+      currentNote.title,
+      currentNote.description,
+      currentNote.tag
+    );
+    props.showAlert("Note updated successfully", "success");
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      getNotes();
+    } else {
+      navigate("/login");
+    }
+
+    // eslint-disable-next-line
+  }, []);
+
+  const updateNote = (note) => {
+    setCurrentNote({
+      id: note._id,
+      title: note.title,
+      description: note.description,
+      tag: note.tag,
+    });
+    ref.current.click();
+  };
+
+  const ref = useRef(null);
+
   return (
-    <div className="col-md-4">
-      <div className="card my-3 shadow border border-dark">
-        <div className="card-body">
-          <div className="d-flex align-items-center justify-content-between">
-            <h5 className="card-title">{note.title}</h5>
-            <div>
-              <i
-                className="fa-solid fa-trash mx-2 text-danger"
-                onClick={() => deleteNote(note._id)}
-              ></i>
-              <i
-                className="fa-solid fa-pen-to-square mx-2 text-success"
-                onClick={() => updateNote(note)}
-              ></i>
+    <>
+      <AddNote showAlert={props.showAlert} />
+
+      <button
+        type="button"
+        className="btn btn-primary d-none"
+        data-bs-toggle="modal"
+        data-bs-target="#exampleModal"
+        ref={ref}
+      >
+        Open Edit Modal
+      </button>
+
+      <div
+        className="modal fade"
+        id="exampleModal"
+        tabIndex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="exampleModalLabel">
+                Edit Note
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <form>
+                <div className="mb-3">
+                  <label htmlFor="title" className="form-label">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="title"
+                    value={currentNote.title}
+                    onChange={(e) =>
+                      setCurrentNote({ ...currentNote, title: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="description" className="form-label">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="description"
+                    value={currentNote.description}
+                    onChange={(e) =>
+                      setCurrentNote({
+                        ...currentNote,
+                        description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="tag" className="form-label">
+                    Tag
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="tag"
+                    value={currentNote.tag}
+                    onChange={(e) =>
+                      setCurrentNote({ ...currentNote, tag: e.target.value })
+                    }
+                  />
+                </div>
+              </form>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                data-bs-dismiss="modal"
+                onClick={handleSaveClick}
+              >
+                Save changes
+              </button>
             </div>
           </div>
-          <p className="card-text">{note.description}</p>
         </div>
       </div>
-    </div>
+
+      <div className="container">
+        <div className="row">
+          <h2>Your Notes</h2>
+          <div className="container">
+            {notes.length === 0 && "No notes to display"}
+          </div>
+          {notes.map((note) => (
+            <Noteitem
+              key={note._id}
+              note={note}
+              deleteNote={deleteNote}
+              updateNote={updateNote}
+              showAlert={props.showAlert}
+            />
+          ))}
+        </div>
+      </div>
+    </>
   );
 };
 
-export default NoteItem;
+export default Notes;
